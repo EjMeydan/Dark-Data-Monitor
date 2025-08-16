@@ -1,5 +1,7 @@
 from pathlib import Path
 from datetime import datetime
+import csv
+import json
 
 def scan_directory(folder_path):
     """
@@ -66,6 +68,50 @@ def classify_files(files):
         
     return files
 
+def export_to_csv(files, filename ="classified_files.csv"):
+    """
+    Export the list of classified files to a CSV file.
+
+    Parameters:
+        files (list of dict): Output from classify_files()
+        filename (str): Name of the CSV file to create
+    """
+
+    # Define CSV column headers
+    fieldnames = ["path", "size_mb", "last_modified", "status"]
+
+    with open(filename, mode="w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+        writer.writeheader()
+        for file in files: 
+            # Convert datetime to string for CSV
+            row = file.copy()
+            row["last_modified"] = row["last_modified"].strftime("%Y-%m-%d %H:%M:%S")
+            writer.writerow(row)
+
+    print(f"Exported {len(files)} files to {filename}")
+
+
+def export_to_json(files, filename="classified_files.json"):
+    """
+    Export the list of classified files to a JSON file.
+
+    Parameters:
+        files (list of dict): Output from classify_files()
+        filename (str): Name of the JSON file to create
+    """
+
+    # Convert datetime to string
+    files_serialisable = []
+    for f in files:
+        temp = f.copy()
+        temp["last_modified"] = temp["last_modified"].strftime("%Y-%m-%d %H:%M:%S")
+        files_serialisable.append(temp)
+
+    with open(filename, "w", encoding="utf-8") as jsonfile:
+        json.dump(files_serialisable, jsonfile, indent=4)
+
+    print(f"Exported {len(files)} files to {filename}")
 
 if __name__ == "__main__":
     files = scan_directory(".")
@@ -73,3 +119,6 @@ if __name__ == "__main__":
 
     for f in classified_files:
         print(f)
+
+    export_to_csv(classified_files)
+    export_to_json(classified_files)
